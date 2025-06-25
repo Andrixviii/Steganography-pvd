@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steganografi PVD</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Aplikasi Steganografi PVD</h1>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash error">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="form-section">
+            <h2>Sisipkan Pesan</h2>
+            <form action="{{ url_for('embed_route') }}" method="post" enctype="multipart/form-data">
+                <label for="cover_image">Pilih Gambar Penampung (PNG, BMP):</label><br>
+                <input type="file" name="cover_image" id="cover_image" accept="image/png, image/bmp, image/tiff" required><br>
+                <label for="secret_message">Pesan Rahasia:</label><br>
+                <textarea name="secret_message" id="secret_message" rows="4" required></textarea><br>
+                <input type="submit" value="Sisipkan Pesan">
+            </form>
+        </div>
+
+        <div class="form-section">
+            <h2>Ekstrak Pesan</h2>
+            <form action="{{ url_for('extract_route') }}" method="post" enctype="multipart/form-data">
+                <label for="stego_image">Pilih Citra Stego:</label><br>
+                <input type="file" name="stego_image" id="stego_image" accept="image/png, image/bmp, image/tiff" required><br>
+                <input type="submit" value="Ekstrak Pesan">
+            </form>
+        </div>
+
+        {% if original_image_url and stego_image_url %}
+        <div class="result-section">
+            <h2>Hasil Penyisipan</h2>
+            <div class="preview-section">
+                <div>
+                    <h3>Gambar Asli</h3>
+                    <img src="{{ original_image_url }}" alt="Gambar Asli">
+                </div>
+                <div>
+                    <h3>Gambar Stego</h3>
+                    <img src="{{ stego_image_url }}" alt="Gambar Stego">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if extracted_message is defined %}
+        <div class="result-section">
+            <h2>Hasil Ekstraksi</h2>
+            <p><strong>Pesan yang Ditemukan:</strong></p>
+            <div class="flash success" style="white-space: pre-wrap;">{{ extracted_message }}</div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
