@@ -4,64 +4,58 @@ from werkzeug.utils import secure_filename
 from PIL import Image
 import pvd_core
 
-# Konfigurasi aplikasi Flask
 app = Flask(__name__)
-# app.config = 'supersecretkey'
-# app.config = 'static/uploads/'
-# app.config = 16 * 1024 * 1024 # Batas ukuran file 16MB
-
-app.secret_key = 'supersecretkey'  # untuk flash message dan session
+app.secret_key = 'supersecretkey'
 app.config['UPLOAD_FOLDER'] = 'static/uploads/'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-
-ALLOWED_EXTENSIONS = {'png', 'bmp', 'tiff'} # Format lossless lebih disarankan
+ALLOWED_EXTENSIONS = {'png', 'bmp', 'tiff'}
 
 def allowed_file(filename):
-    """Memeriksa apakah ekstensi file diizinkan."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def index():
-    """Menampilkan halaman utama."""
     return render_template('index.html')
 
 @app.route('/embed', methods=['POST'])
 def embed_route():
-    """Menangani proses penyisipan data."""
     if 'cover_image' not in request.files or 'secret_message' not in request.form:
         flash('Formulir tidak lengkap.')
         return redirect(url_for('index'))
 
     file = request.files['cover_image']
     message = request.form['secret_message']
-    
 
     if file.filename == '' or message == '':
         flash('Gambar penampung dan pesan rahasia tidak boleh kosong.')
         return redirect(url_for('index'))
 
     if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        upload_dir = app.config['UPLOAD_FOLDER']
-        original_path = os.path.join(upload_dir, 'original_' + filename)
-        stego_path = os.path.join(upload_dir, 'stego_' + filename)
-        
-        # DEBUG LOG
-        print("[DEBUG] File yang diupload      : ", filename)
-        print("[DEBUG] Pesan yang disembunyikan: ", message)
-
-        file.save(original_path)
-
         try:
-            cover_image = Image.open(original_path).convert('RGB')
+            # Buka gambar langsung dari stream file tanpa menyimpan ke disk
+            cover_image = Image.open(file.stream).convert('RGB')
             stego_image = pvd_core.embed(cover_image, message)
-            stego_image.save(stego_path)
-            
-            return render_template('index.html', 
-                                   original_image_url=url_for('uploads', filename='original_' + filename),
-                                   stego_image_url=url_for('uploads', filename='stego_' + filename))
+
+            # Simpan hasil stego ke objek BytesIO (in-memory)
+            from io import BytesIO
+            stego_io = BytesIO()
+            stego_image.save(stego_io, format='PNG')
+            stego_io.seek(0)
+            import base64
+            stego_base64 = base64.b64encode(stego_io.read()).decode('utf-8')
+            stego_data_url = f"data:image/png;base64,{stego_base64}"
+
+            cover_io = BytesIO()
+            cover_image.save(cover_io, format='PNG')
+            cover_io.seek(0)
+            cover_base64 = base64.b64encode(cover_io.read()).decode('utf-8')
+            cover_data_url = f"data:image/png;base64,{cover_base64}"
+
+            return render_template('index.html',
+                                   original_image_url=cover_data_url,
+                                   stego_image_url=stego_data_url)
         except ValueError as e:
             flash(str(e))
             return redirect(url_for('index'))
@@ -74,7 +68,6 @@ def embed_route():
 
 @app.route('/extract', methods=['POST'])
 def extract_route():
-    """Menangani proses ekstraksi data."""
     if 'stego_image' not in request.files:
         flash('Silakan unggah citra stego.')
         return redirect(url_for('index'))
@@ -100,16 +93,9 @@ def extract_route():
 
 @app.route('/uploads/<filename>')
 def uploads(filename):
-    """Menyajikan file yang diunggah untuk pratinjau."""
-    # return send_from_directory(app.config, filename)
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-
 if __name__ == '__main__':
-    # if not os.path.exists(app.config):
-    #     os.makedirs(app.config)
-        
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
         os.makedirs(app.config['UPLOAD_FOLDER'])
-
-    app.run()
+    app.run(debug=True)
