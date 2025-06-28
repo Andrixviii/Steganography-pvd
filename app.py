@@ -2,7 +2,9 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 from werkzeug.utils import secure_filename
 from PIL import Image
-import pvd_core
+import base64
+from io import BytesIO
+import pvd_core  # pastikan file ini ada di repo kamu atau installable
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
@@ -34,16 +36,12 @@ def embed_route():
 
     if file and allowed_file(file.filename):
         try:
-            # Buka gambar langsung dari stream file tanpa menyimpan ke disk
             cover_image = Image.open(file.stream).convert('RGB')
             stego_image = pvd_core.embed(cover_image, message)
 
-            # Simpan hasil stego ke objek BytesIO (in-memory)
-            from io import BytesIO
             stego_io = BytesIO()
             stego_image.save(stego_io, format='PNG')
             stego_io.seek(0)
-            import base64
             stego_base64 = base64.b64encode(stego_io.read()).decode('utf-8')
             stego_data_url = f"data:image/png;base64,{stego_base64}"
 
@@ -95,7 +93,10 @@ def extract_route():
 def uploads(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+# 🚀 Bagian penting untuk Railway
 if __name__ == '__main__':
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
         os.makedirs(app.config['UPLOAD_FOLDER'])
-    app.run(debug=True)
+    
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
