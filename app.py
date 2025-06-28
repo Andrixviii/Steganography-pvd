@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 from PIL import Image
 import base64
 from io import BytesIO
-import pvd_core  # pastikan file ini ada di repo kamu atau installable
+import pvd_core  
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
