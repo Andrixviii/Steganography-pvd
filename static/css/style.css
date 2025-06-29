@@ -10,6 +10,7 @@ body {
     margin: 0;
     background-color: var(--background-color);
     color: var(--text-color);
+    line-height: 1.6;
 }
 .main-container {
     max-width: 1200px;
@@ -18,12 +19,17 @@ body {
 }
 .app-layout {
     display: flex;
-    flex-wrap: wrap;
     gap: 2em;
     align-items: flex-start;
 }
-.app-main { flex: 1.2; min-width: 400px; }
-.app-results { flex: 2; min-width: 450px; }
+.app-main { 
+    flex: 1.2; 
+    min-width: 400px; 
+}
+.app-results { 
+    flex: 2; 
+    min-width: 450px; 
+}
 
 /* Sistem Tabs */
 .tabs {
@@ -104,7 +110,7 @@ body {
 .file-uploader h4 { 
     margin: 0;
     font-weight: 600;
-    word-break: break-all; /* Mencegah nama file panjang merusak layout */
+    word-break: break-word;
 }
 .file-uploader p { margin: 0; font-size: 0.875rem; color: var(--subtle-text-color); margin-top: 4px;}
 
@@ -169,3 +175,48 @@ textarea {
 .flash { padding: 1em; margin-bottom: 1em; border-radius: 0.5rem; }
 .flash.error { background-color: #fee2e2; color: #991b1b; }
 .flash.success { background-color: #dcfce7; color: #166534; white-space: pre-wrap; word-break: break-all;}
+
+
+/* -------------------------------------- */
+/* --- Media Query untuk Tampilan Mobile --- */
+/* -------------------------------------- */
+@media (max-width: 992px) {
+    /* Ubah layout utama menjadi 1 kolom */
+    .app-layout {
+        flex-direction: column;
+    }
+
+    /* Hapus min-width agar kolom bisa lebih ramping */
+    .app-main, .app-results {
+        min-width: 100%;
+    }
+
+    /* Ubah grid hasil juga menjadi 1 kolom */
+    .result-grid {
+        flex-direction: column;
+    }
+
+    /* Kurangi padding di container utama untuk mobile */
+    .main-container {
+        padding: 1em;
+        margin: 1em auto;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Atur agar tombol tab tidak terlalu besar di layar sangat kecil */
+    .tab-button {
+        font-size: 0.875rem;
+        padding: 0.75em 0.5em;
+        gap: 0.25em; /* Kurangi jarak antara ikon dan teks */
+    }
+
+    .card {
+        padding: 1em;
+    }
+
+    .main-container {
+        margin: 0;
+        padding: 0.5em;
+    }
+}
