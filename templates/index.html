@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steganografi Interaktif</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="app-layout">
+            
+            <main class="app-main">
+                <div class="tabs">
+                    <button class="tab-button" data-target="#embed-panel">
+                        <i data-lucide="package-plus"></i> Embed Message
+                    </button>
+                    <button class="tab-button" data-target="#extract-panel">
+                        <i data-lucide="file-scan"></i> Extract Message
+                    </button>
+                </div>
+
+                <div id="embed-panel" class="panel">
+                    <form action="{{ url_for('embed_route') }}" method="post" enctype="multipart/form-data">
+                        <div class="card">
+                            <div class="card-header"><h3>Select Cover Image</h3></div>
+                            <label for="cover_image" class="file-uploader">
+                                <div class="icon-circle"><i data-lucide="image"></i></div>
+                                <h4 id="uploader-text">Choose Image</h4>
+                                <p class="file-uploader-info">Supports PNG, JPG, JPEG, BMP</p>
+                            </label>
+                            <input type="file" id="cover_image" name="cover_image" accept="image/png, image/jpeg" required hidden>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3>Secret Message</h3></div>
+                            <textarea name="secret_message" id="secret_message" placeholder="Enter your secret message..." required></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn">Embed Message</button>
+                    </form>
+                </div>
+
+                <div id="extract-panel" class="panel">
+                    <form action="{{ url_for('extract_route') }}" method="post" enctype="multipart/form-data">
+                        <div class="card">
+                            <div class="card-header"><h3>Select Stego Image</h3></div>
+                            <label for="stego_image" class="file-uploader">
+                                <div class="icon-circle"><i data-lucide="image-up"></i></div>
+                                <h4 id="extract-uploader-text">Choose Stego Image</h4>
+                                <p class="file-uploader-info">Supports PNG</p>
+                            </label>
+                            <input type="file" name="stego_image" id="stego_image" accept="image/png, image/jpeg, image/jpg, image/bmp" required hidden>
+                        </div>
+                        <button type="submit" class="submit-btn">Extract Message</button>
+                    </form>
+                </div>
+            </main>
+
+            <aside class="app-results">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div id="initial-preview-container" style="display: none;">
+                     <div class="card">
+                        <div class="card-header">
+                            <h3>Original Image</h3>
+                            <button type="button" class="icon-btn" id="clear-preview-btn"><i data-lucide="x"></i></button>
+                        </div>
+                        <div class="result-preview">
+                            <img id="initial-preview-image" src="" alt="Initial Preview">
+                        </div>
+                    </div>
+                </div>
+
+                {% if original_image_url and stego_image_url %}
+                <div class="result-grid">
+                    <div class="card">
+                        <div class="card-header"><h3>Original Image</h3></div>
+                        <div class="result-preview">
+                             <img src="{{ original_image_url }}" alt="Gambar Asli">
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3>Steganography Result</h3></div>
+                        <div class="result-preview">
+                            <img src="{{ stego_image_url }}" alt="Gambar Stego">
+                        </div>
+                        <a href="{{ stego_image_url }}" download="stego.png" class="download-btn">
+                            <i data-lucide="download"></i> Download Result
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                 {% if extracted_message %}
+                <div class="card">
+                    <div class="card-header"><h3>Extraction Result</h3></div>
+                    <div class="flash success">{{ extracted_message }}</div>
+                </div>
+                {% endif %}
+            </aside>
+        </div>
+    </div>
+
+    <script>
+
+        lucide.createIcons();
+        
+
+        const embedTab = document.querySelector('.tab-button[data-target="#embed-panel"]');
+        const extractTab = document.querySelector('.tab-button[data-target="#extract-panel"]');
+        const embedPanel = document.getElementById('embed-panel');
+        const extractPanel = document.getElementById('extract-panel');
+
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if extracted_message %}
+                extractTab.classList.add('active');
+                extractPanel.classList.add('active');
+            {% elif original_image_url and stego_image_url %}
+                embedTab.classList.add('active');
+                embedPanel.classList.add('active');
+            {% else %}
+                embedTab.classList.add('active');
+                embedPanel.classList.add('active');
+            {% endif %}
+        });
+
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+                button.classList.add('active');
+                document.querySelector(button.dataset.target).classList.add('active');
+            });
+        });
+
+        const coverImageInput = document.getElementById('cover_image');
+        const previewContainer = document.getElementById('initial-preview-container');
+        const previewImage = document.getElementById('initial-preview-image');
+        const uploaderText = document.getElementById('uploader-text');
+        const clearPreviewBtn = document.getElementById('clear-preview-btn');
+        
+        coverImageInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                    uploaderText.textContent = file.name;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        clearPreviewBtn.addEventListener('click', function() {
+            previewContainer.style.display = 'none';
+            previewImage.src = '';
+            coverImageInput.value = '';
+            uploaderText.textContent = 'Choose Image';
+        });
+
+        const stegoImageInput = document.getElementById('stego_image');
+        const extractUploaderText = document.getElementById('extract-uploader-text');
+
+        stegoImageInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                extractUploaderText.textContent = file.name;
+            } else {
+                extractUploaderText.textContent = 'Choose Stego Image';
+            }
+        });
+
+        if (document.querySelector('.result-grid')) {
+            previewContainer.style.display = 'none';
+        }
+
+    </script>
+</body>
+</html>
