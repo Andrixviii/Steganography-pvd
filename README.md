@@ -6,9 +6,15 @@ Aplikasi web interaktif untuk menyisipkan (embed) dan mengekstrak (extract) pesa
 
 ## Teknologi & Algoritma
 
+<<<<<<< HEAD
 - **Backend:** Python, Flask, Pillow (PIL).
 - **Frontend:** HTML/CSS/JS, Lucide Icons.
 - **Algoritma:** [Pixel Value Differencing (PVD)](https://en.wikipedia.org/wiki/Steganography#Pixel_value_differencing).
+=======
+- **Backend:** Python, Flask, Pillow (PIL)
+- **Frontend:** HTML/CSS/JS, Lucide Icons
+- **Algoritma:** [Pixel Value Differencing (PVD)](https://en.wikipedia.org/wiki/Steganography#Pixel_value_differencing)
+>>>>>>> 9a4bc9dbae40bdead124877f06490c094d97658e
 
 ### Penjelasan Singkat PVD
 PVD membagi gambar menjadi pasangan piksel. Perbedaan nilai antara setiap pasangan digunakan untuk menyisipkan sejumlah bit pesan, tergantung rentang perbedaan tersebut. Semakin besar perbedaan, semakin banyak bit yang bisa disisipkan tanpa membuat perubahan visual yang mencolok.
